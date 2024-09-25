@@ -34,28 +34,30 @@ A * B = P1 * 2^N + (P3 - P1 - P2) * 2^(N/2) + P2
 
 ```bash
 make
+```
 Это скомпилирует файл main.cpp и создаст исполняемый файл с именем karatsuba_gen.
 
 
 ### Запуск
 Чтобы сгенерировать Verilog-файл для заданной разрядности N, выполните программу следующим образом:
-
+```bash
 ./karatsuba_gen
-
+```
 После запуска вас попросят ввести разрядность N. После ввода числа программа сгенерирует Verilog-файл с именем karatsuba_multiplier_N.v.
 
-Очистка
+### Очистка
 Чтобы удалить скомпилированный исполняемый файл и объектные файлы, выполните:
 
-make clean
+     make clean
 
 Чтобы удалить сгенерированные Verilog-файлы:
 
-make clean_verilog
+     make clean_verilog
 
 Пример сгенерированного Verilog-описания
 Для разрядности N = 16 программа генерирует следующий Verilog-модуль:
 
+```bash
 module karatsuba_multiplier (
     input  [15:0] A,
     input  [15:0] B,
@@ -72,10 +74,11 @@ module karatsuba_multiplier (
 
     assign R = (P1 << 16) + ((P3 - P1 - P2) << 8) + P2;
 endmodule
-
-Тестирование
+```
+## Тестирование
 Тестбенч tb_karatsuba_multiplier.v используется для тестирования сгенерированного Verilog-модуля. В нем задаются несколько тестов с известными результатами для проверки правильности умножения.
 
+```bash
 `timescale 1ns/1ps
 
 module tb_karatsuba_multiplier;
@@ -117,14 +120,14 @@ module tb_karatsuba_multiplier;
         $finish;
     end
 endmodule
-
-Пример вывода тестов
-
+```
+### Пример вывода тестов
+```bash
 A =    10, B =    12, R =        120 (Expected: 120)
 A =   255, B =   255, R =      65025 (Expected: 65025)
 A =  1024, B =   512, R =     524288 (Expected: 524288)
 A =  1234, B =  5678, R =    7006652 (Expected: 7006652)
 A = 65535, B = 65535, R = 4294836225 (Expected: 4294836225)
-
+```
 
 
