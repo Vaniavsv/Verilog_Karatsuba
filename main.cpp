@@ -49,23 +49,23 @@ void generate_verilog(int N, const std::string& filename) {
 
     file << "    reg [" << halfN << ":0] a_hi, a_lo;\n";
     file << "    reg [" << halfN << ":0] b_hi, b_lo;\n";
-    file << "    reg [" << halfN + 1 << ":0] sum_a, sum_b;\n";
+    file << "    reg [" << halfN << ":0] sum_a, sum_b;\n";
     file << "    wire [" << (2 * halfN + 2) << ":0] res_lo, res_mid, res_hi;\n";
     file << "    reg [" << full_bits - 1 << ":0] mid, hi;\n\n";
 
     file << "    always @(*) begin\n";
-    file << "        a_hi = a[" << N - 1 << ":" << halfN << "];\n";
+    file << "        a_hi = {1'b0, a[" << N - 1 << ":" << halfN << "]};\n";
     file << "        a_lo = {1'b0, a[" << halfN - 1 << ":0]};\n";
     file << "        sum_a = a_hi + a_lo;\n\n";
 
-    file << "        b_hi = b[" << N - 1 << ":" << halfN << "];\n";
+    file << "        b_hi = {1'b0, b[" << N - 1 << ":" << halfN << "]};\n";
     file << "        b_lo = {1'b0, b[" << halfN - 1 << ":0]};\n";
     file << "        sum_b = b_hi + b_lo;\n";
     file << "    end\n\n";
 
     file << "    sm mult_lo(.a(a_lo), .b(b_lo), .prod(res_lo));\n";
     file << "    sm mult_mid(.a(a_hi), .b(b_hi), .prod(res_mid));\n";
-    file << "    sm mult_hi(.a(sum_a[" << halfN << ":0]), .b(sum_b[" << halfN << ":0]), .prod(res_hi));\n\n";
+    file << "    sm mult_hi(.a(sum_a), .b(sum_b), .prod(res_hi));\n\n";
 
     file << "    always @(*) begin\n";
     file << "        mid = res_hi - res_mid - res_lo;\n";
