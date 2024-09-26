@@ -26,23 +26,23 @@ module karatsuba_multiplier (
 
     reg [8:0] a_hi, a_lo;
     reg [8:0] b_hi, b_lo;
-    reg [9:0] sum_a, sum_b;
+    reg [8:0] sum_a, sum_b;
     wire [18:0] res_lo, res_mid, res_hi;
     reg [31:0] mid, hi;
 
     always @(*) begin
-        a_hi = a[15:8];
+        a_hi = {1'b0, a[15:8]};
         a_lo = {1'b0, a[7:0]};
         sum_a = a_hi + a_lo;
 
-        b_hi = b[15:8];
+        b_hi = {1'b0, b[15:8]};
         b_lo = {1'b0, b[7:0]};
         sum_b = b_hi + b_lo;
     end
 
     sm mult_lo(.a(a_lo), .b(b_lo), .prod(res_lo));
     sm mult_mid(.a(a_hi), .b(b_hi), .prod(res_mid));
-    sm mult_hi(.a(sum_a[8:0]), .b(sum_b[8:0]), .prod(res_hi));
+    sm mult_hi(.a(sum_a), .b(sum_b), .prod(res_hi));
 
     always @(*) begin
         mid = res_hi - res_mid - res_lo;
