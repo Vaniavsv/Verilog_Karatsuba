@@ -58,22 +58,62 @@ make
 Для разрядности N = 16 программа генерирует следующий Verilog-модуль:
 
 ```bash
-module karatsuba_multiplier (
-    input  [15:0] A,
-    input  [15:0] B,
-    output [31:0] R
+module sm (
+    output reg [18:0] prod,
+    input [8:0] a,
+    input [8:0] b
 );
-    wire [7:0] A1 = A[15:8];
-    wire [7:0] A0 = A[7:0];
-    wire [7:0] B1 = B[15:8];
-    wire [7:0] B0 = B[7:0];
 
-    wire [15:0] P1 = A1 * B1;
-    wire [15:0] P2 = A0 * B0;
-    wire [17:0] P3 = (A1 + A0) * (B1 + B0);
+    reg [18:0] res;
+    reg [3:0] i;
 
-    assign R = (P1 << 16) + ((P3 - P1 - P2) << 8) + P2;
+    always @(*) begin
+        res = 19'b0;
+        for (i = 0; i < 9; i = i + 1) begin
+            if ((b & (1 << i)) != 0) begin
+                res = res + (a << i); 
+            end
+        end
+        prod = res;
+    end
 endmodule
+
+module karatsuba_multiplier (
+    input [15:0] a,
+    input [15:0] b,
+    output reg [31:0] prod
+);
+
+    reg [8:0] a_hi, a_lo;
+    reg [8:0] b_hi, b_lo;
+    reg [8:0] sum_a, sum_b;
+    wire [18:0] res_lo, res_mid, res_hi;
+    reg [31:0] mid, hi;
+
+    always @(*) begin
+        a_hi = {1'b0, a[15:8]};
+        a_lo = {1'b0, a[7:0]};
+        sum_a = a_hi + a_lo;
+
+        b_hi = {1'b0, b[15:8]};
+        b_lo = {1'b0, b[7:0]};
+        sum_b = b_hi + b_lo;
+    end
+
+    sm mult_lo(.a(a_lo), .b(b_lo), .prod(res_lo));
+    sm mult_mid(.a(a_hi), .b(b_hi), .prod(res_mid));
+    sm mult_hi(.a(sum_a), .b(sum_b), .prod(res_hi));
+
+    always @(*) begin
+        mid = res_hi - res_mid - res_lo;
+        hi = res_mid << 16;
+    end
+
+    always @(*) begin
+        prod = hi + (mid << 8) + res_lo;
+    end
+endmodule
+
 ```
 ## Тестирование
 Тестбенч tb_karatsuba_multiplier.v используется для тестирования сгенерированного Verilog-модуля. В нем задаются несколько тестов с известными результатами для проверки правильности умножения.
@@ -84,38 +124,59 @@ endmodule
 module tb_karatsuba_multiplier;
     reg [15:0] A;
     reg [15:0] B;
-    wire [31:0] R;
+    wire [31:0] result;
 
     karatsuba_multiplier uut (
-        .A(A),
-        .B(B),
-        .R(R)
+        .a(A),
+        .b(B),
+        .prod(result)
     );
+
     initial begin
-        A = 16'd10;
-        B = 16'd12;
+        A = 16'd3;
+        B = 16'd5;
         #10; 
-        $display("A = %d, B = %d, R = %d (Expected: 120)", A, B, R);
+        $display("A = %d, B = %d, result = %d (Expected: 15)", A, B, result);
 
-        A = 16'd255;
-        B = 16'd255;
-        #10;
-        $display("A = %d, B = %d, R = %d (Expected: 65025)", A, B, R);
+        A = 16'd12;
+        B = 16'd10;
+        #10; 
+        $display("A = %d, B = %d, result = %d (Expected: 120)", A, B, result);
 
-        A = 16'd1024;
-        B = 16'd512;
-        #10;
-        $display("A = %d, B = %d, R = %d (Expected: 524288)", A, B, R);
+        A = 16'd8;
+        B = 16'd7;
+        #10; 
+        $display("A = %d, B = %d, result = %d (Expected: 56)", A, B, result);
 
-        A = 16'd1234;
-        B = 16'd5678;
-        #10;
-        $display("A = %d, B = %d, R = %d (Expected: 7006652)", A, B, R);
+        A = 16'd15;
+        B = 16'd15;
+        #10; 
+        $display("A = %d, B = %d, result = %d (Expected: 225)", A, B, result);
+
+        A = 16'd0;
+        B = 16'd1;
+        #10; 
+        $display("A = %d, B = %d, result = %d (Expected: 0)", A, B, result);
 
         A = 16'd65535;
-        B = 16'd65535;
+        B = 16'd65535; 
+        #10; 
+        $display("A = %d, B = %d, result = %d (Expected: 4294836225)", A, B, result);
+
+        A = 16'd1234;
+        B = 16'd5678; 
         #10;
-        $display("A = %d, B = %d, R = %d (Expected: 4294836225)", A, B, R);
+        $display("A = %d, B = %d, result = %d (Expected: 7006652)", A, B, result);
+
+        A = 16'd32768;
+        B = 16'd2;
+        #10;
+        $display("A = %d, B = %d, result = %d (Expected: 65536)", A, B, result);
+
+        A = 16'd1024;
+        B = 16'd1024;
+        #10;
+        $display("A = %d, B = %d, result = %d (Expected: 1048576)", A, B, result);
 
         $finish;
     end
@@ -123,11 +184,15 @@ endmodule
 ```
 ### Пример вывода тестов
 ```bash
-A =    10, B =    12, R =        120 (Expected: 120)
-A =   255, B =   255, R =      65025 (Expected: 65025)
-A =  1024, B =   512, R =     524288 (Expected: 524288)
-A =  1234, B =  5678, R =    7006652 (Expected: 7006652)
-A = 65535, B = 65535, R = 4294836225 (Expected: 4294836225)
+A =     3, B =     5, result =         15 (Expected: 15)
+A =    12, B =    10, result =        120 (Expected: 120)
+A =     8, B =     7, result =         56 (Expected: 56)
+A =    15, B =    15, result =        225 (Expected: 225)
+A =     0, B =     1, result =          0 (Expected: 0)
+A = 65535, B = 65535, result = 4294836225 (Expected: 4294836225)
+A =  1234, B =  5678, result =    7006652 (Expected: 7006652)
+A = 32768, B =     2, result =      65536 (Expected: 65536)
+A =  1024, B =  1024, result =    1048576 (Expected: 1048576)
 ```
 
 
