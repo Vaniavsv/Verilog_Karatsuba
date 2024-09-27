@@ -2,6 +2,7 @@
 #include <fstream>
 #include <string>
 #include <locale>
+#include <cmath>
 
 void generate_sm_module(std::ofstream& file, int N) {
     int sm_bits = 2 * (N / 2) + 1;
