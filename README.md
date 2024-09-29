@@ -7,8 +7,7 @@
 
 - **main.cpp**: Программа на C++ для генерации Verilog-описания умножителя Карацубы.
 - **Makefile**: Скрипт сборки для компиляции программы и выполнения операций очистки.
-- **tb_karatsuba_multiplier.v**: Тестбенч для проверки сгенерированного Verilog-модуля.
-- **Verilog-файлы**: Сгенерированные Verilog-файлы имеют имена, такие как `karatsuba_multiplier_N.v`, где `N` — разрядность входных чисел.
+- **Verilog-файлы**: Сгенерированные Verilog-файлы имеют имена, такие как `karatsuba_mul_N.v`, где `N` — разрядность входных чисел.
 
 ## Описание алгоритма Карацубы
 
@@ -43,7 +42,7 @@ make
 ```bash
 ./karatsuba_gen
 ```
-После запуска вас попросят ввести разрядность N. После ввода числа программа сгенерирует Verilog-файл с именем karatsuba_multiplier_N.v.
+После запуска вас попросят ввести разрядность N. После ввода числа программа сгенерирует Verilog-файл с именем karatsuba_mul_N.v.
 
 ### Очистка
 Чтобы удалить скомпилированный исполняемый файл и объектные файлы, выполните:
@@ -65,20 +64,20 @@ module sm (
 );
 
     reg [18:0] res;
-    reg [3:0] i;
+    reg [4:0] i;
 
     always @(*) begin
         res = 19'b0;
         for (i = 0; i < 9; i = i + 1) begin
             if ((b & (1 << i)) != 0) begin
-                res = res + (a << i); 
+                res = res + (a << i);
             end
         end
         prod = res;
     end
 endmodule
 
-module karatsuba_multiplier (
+module karatsuba_mul (
     input [15:0] a,
     input [15:0] b,
     output reg [31:0] prod
@@ -114,85 +113,121 @@ module karatsuba_multiplier (
     end
 endmodule
 
-```
-## Тестирование
-Тестбенч tb_karatsuba_multiplier.v используется для тестирования сгенерированного Verilog-модуля. В нем задаются несколько тестов с известными результатами для проверки правильности умножения.
-
-```bash
 `timescale 1ns/1ps
-
-module tb_karatsuba_multiplier;
+module tb_karatsuba_mul;
     reg [15:0] A;
     reg [15:0] B;
-    wire [31:0] result;
+    wire [31:0] res;
 
-    karatsuba_multiplier uut (
+    karatsuba_mul uut (
         .a(A),
         .b(B),
-        .prod(result)
+        .prod(res)
     );
 
     initial begin
-        A = 16'd3;
-        B = 16'd5;
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 15)", A, B, result);
+        $display("Starting tests...");
 
-        A = 16'd12;
-        B = 16'd10;
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 120)", A, B, result);
-
-        A = 16'd8;
-        B = 16'd7;
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 56)", A, B, result);
-
-        A = 16'd15;
-        B = 16'd15;
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 225)", A, B, result);
-
-        A = 16'd0;
-        B = 16'd1;
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 0)", A, B, result);
-
-        A = 16'd65535;
-        B = 16'd65535; 
-        #10; 
-        $display("A = %d, B = %d, result = %d (Expected: 4294836225)", A, B, result);
-
-        A = 16'd1234;
-        B = 16'd5678; 
+        A = 16'b11111001100000; B = 16'b101111000011001;
         #10;
-        $display("A = %d, B = %d, result = %d (Expected: 7006652)", A, B, result);
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
 
-        A = 16'd32768;
-        B = 16'd2;
+        A = 16'b110011100010100; B = 16'b100010111011111;
         #10;
-        $display("A = %d, B = %d, result = %d (Expected: 65536)", A, B, result);
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
 
-        A = 16'd1024;
-        B = 16'd1024;
+        A = 16'b110010110111001; B = 16'b1010100100100;
         #10;
-        $display("A = %d, B = %d, result = %d (Expected: 1048576)", A, B, result);
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b100111011101011; B = 16'b10101010110001;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b1100001111011; B = 16'b11011001111101;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b10011001000111; B = 16'b11100110100011;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b101011011010100; B = 16'b11101100100011;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b101010110000010; B = 16'b111111110110110;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b110011110010011; B = 16'b100010100111110;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
+
+        A = 16'b101001001101010; B = 16'b100011010001100;
+        #10;
+        if (res == A * B) begin
+            $display("Pass: A=%d, B=%d, res=%d", A, B, res);
+        end else begin
+            $display("Fail: A=%d, B=%d, expected=%d, got=%d", A, B, A * B, res);
+        end
 
         $finish;
     end
 endmodule
+
+
 ```
+
 ### Пример вывода тестов
 ```bash
-A =     3, B =     5, result =         15 (Expected: 15)
-A =    12, B =    10, result =        120 (Expected: 120)
-A =     8, B =     7, result =         56 (Expected: 56)
-A =    15, B =    15, result =        225 (Expected: 225)
-A =     0, B =     1, result =          0 (Expected: 0)
-A = 65535, B = 65535, result = 4294836225 (Expected: 4294836225)
-A =  1234, B =  5678, result =    7006652 (Expected: 7006652)
-A = 32768, B =     2, result =      65536 (Expected: 65536)
-A =  1024, B =  1024, result =    1048576 (Expected: 1048576)
+Starting tests...
+Pass: A=15968, B=24089, res= 384653152
+Pass: A=26388, B=17887, res= 472002156
+Pass: A=26041, B= 5412, res= 140933892
+Pass: A=20203, B=10929, res= 220798587
+Pass: A= 6267, B=13949, res=  87418383
+Pass: A= 9799, B=14755, res= 144584245
+Pass: A=22228, B=15139, res= 336509692
+Pass: A=21890, B=32694, res= 715671660
+Pass: A=26515, B=17726, res= 470004890
+Pass: A=21098, B=18060, res= 381029880
 ```
 
 
