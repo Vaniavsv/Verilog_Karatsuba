@@ -10,7 +10,7 @@
 std::vector<int> gen_num(int bits) {
     std::vector<int> num((bits + 31) / 32, 0);
 
-    for (int i = 0; i < num.size(); ++i) {
+    for (unsigned int i = 0; i < num.size(); ++i) {
         num[i] = rand();
     }
 
