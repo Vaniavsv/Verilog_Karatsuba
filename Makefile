@@ -13,4 +13,4 @@ clean:
 	rm -f $(TARGET) *.o
 
 clean_verilog:
-	rm -f karatsuba_multiplier_*.v
+	rm -f karatsuba_mul_*.v
